@@ -78,19 +78,26 @@ app.use((req, res, next) => {
 app.use(mongoSanitize());
 
 // 6. Dynamic CORS Origin check list mapping production endpoints
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL]
-  : [
-      process.env.FRONTEND_URL,
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://localhost:5175',
-      'http://localhost:3000',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:5174',
-      'http://127.0.0.1:5175',
-      'http://127.0.0.1:3000'
-    ].filter(Boolean);
+const devOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:3000'
+];
+
+const parsedEnvUrls = process.env.FRONTEND_URLS
+  ? process.env.FRONTEND_URLS.split(',').map(url => url.trim())
+  : [];
+
+const allowedOrigins = [
+  ...parsedEnvUrls,
+  process.env.FRONTEND_URL,
+  ...(process.env.NODE_ENV === 'production' ? [] : devOrigins)
+].filter(Boolean);
 
 app.use(
   cors({
@@ -101,6 +108,8 @@ app.use(
         callback(new Error('Not allowed by CORS'));
       }
     },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
   })
 );
