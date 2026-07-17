@@ -1,133 +1,157 @@
-import React, { createContext, useContext, useCallback, useMemo } from 'react';
-// Import the custom local storage hook to manage state persistence
-import { useLocalStorage } from '../hooks/useLocalStorage';
-// Import the realistic seed dataset containing 6 Indian client records
-import { sampleLeads } from '../data/sampleLeads';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
+import leadService from '../services/leadService';
+import { useAuth } from './AuthContext';
+
+const LeadContext = createContext(null);
 
 /**
- * Shape of the Lead Object:
- * 
- * interface Lead {
- *   id: string;
- *   name: string;
- *   company: string;
- *   email: string;
- *   phone: string;
- *   status: 'New' | 'Contacted' | 'Meeting Scheduled' | 'Proposal Sent' | 'Won' | 'Lost';
- *   source: 'Website' | 'Referral' | 'LinkedIn' | 'Cold Call' | 'Email Campaign' | 'Other';
- *   value?: number;
- *   owner?: string;
- *   notes?: Array<{ id: string; text: string; date: string }>;
- *   createdAt: string; // ISO date string
- * }
+ * Normalizes a lead document returned from the backend API.
+ * Ensures Mongoose ObjectIds (_id) map to front-end ids and string notes format safely into array lists.
+ *
+ * @param {Object} lead - Raw lead document.
+ * @returns {Object} Cleaned, front-end compatible lead.
  */
-
-// Create the Context Object for leads state management.
-export const LeadContext = createContext();
+function normalizeLead(lead) {
+  return {
+    ...lead,
+    id: lead._id || lead.id,
+    notes: typeof lead.notes === 'string'
+      ? (lead.notes ? [{ id: `note-${lead._id || lead.id}`, text: lead.notes, date: lead.updatedAt || lead.createdAt }] : [])
+      : (Array.isArray(lead.notes) ? lead.notes : [])
+  };
+}
 
 /**
- * LeadProvider component initializes leads state within local storage
- * and shares CRUD handler actions with child components.
- * Optimizes references with useCallback and useMemo to prevent consumer re-renders.
+ * LeadProvider manages the active pipeline opportunities.
+ * Connects directly to the REST API database endpoints.
  *
  * @param {Object} props - React props.
- * @param {React.ReactNode} props.children - Child nodes to wrap.
- * @returns {React.JSX.Element} The context Provider layout.
+ * @param {React.ReactNode} props.children - Child routes inside layout framework.
+ * @returns {React.JSX.Element} Lead Context Provider wrapper.
  */
 export function LeadProvider({ children }) {
-  // Use useLocalStorage hook to bind context leads state to 'startup-crm-leads' key in localStorage, defaulting to sampleLeads
-  const [leads, setLeads] = useLocalStorage('startup-crm-leads', sampleLeads);
+  const { token } = useAuth();
+  const [leads, setLeads] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
 
   /**
-   * Adds a new lead profile to the state and synchronizes localStorage.
-   * Generates a unique UUID and appends the ISO createdAt timestamp automatically.
-   * Memoized using useCallback to stabilize its functional reference.
+   * Fetches pipeline leads list from server with active query filters.
    */
-  const addLead = useCallback((leadData) => {
-    // Generate UUID. Fall back to Date.now() string if crypto API is unavailable.
-    const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID 
-      ? crypto.randomUUID() 
-      : `lead-${Date.now()}`;
+  const fetchLeads = useCallback(async (params) => {
+    setIsLoading(true);
+    try {
+      const res = await leadService.getLeads(params);
+      // getLeads returns { success: true, data: [...], pagination: { ... } }
+      if (res && res.data) {
+        const cleaned = res.data.map(normalizeLead);
+        setLeads(cleaned);
+        if (res.pagination) {
+          setPagination(res.pagination);
+        }
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Failed to load leads from database';
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    const newLead = {
-      id: uniqueId,
-      name: leadData.name,
-      company: leadData.company,
-      email: leadData.email,
-      phone: leadData.phone || '',
-      status: leadData.status || 'New',
-      source: leadData.source || 'Other',
-      value: Number(leadData.value) || 0,
-      owner: leadData.owner || 'Anish Reddy',
-      notes: leadData.notes ? [{ id: `note-${Date.now()}`, text: leadData.notes, date: new Date().toISOString() }] : [],
-      createdAt: new Date().toISOString() // Automatic ISO timestamp generation
-    };
-
-    setLeads((prev) => [newLead, ...prev]);
-    return newLead;
-  }, [setLeads]);
+  // Automatically sync pipeline leads when user session resolves/tokens change
+  useEffect(() => {
+    if (token) {
+      fetchLeads();
+    } else {
+      setLeads([]);
+    }
+  }, [token, fetchLeads]);
 
   /**
-   * Updates an existing lead record by ID with changed parameter values.
-   * Memoized using useCallback to stabilize its functional reference.
+   * Appends a new opportunity to the workspace.
    */
-  const updateLead = useCallback((leadId, updatedFields) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === leadId ? { ...lead, ...updatedFields } : lead))
-    );
-  }, [setLeads]);
+  const addLead = useCallback(async (leadData) => {
+    setIsLoading(true);
+    try {
+      const res = await leadService.createLead(leadData);
+      if (res && res.data) {
+        const cleaned = normalizeLead(res.data);
+        setLeads((prev) => [cleaned, ...prev]);
+        toast.success('Lead created successfully');
+        return cleaned;
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Failed to create new lead';
+      toast.error(msg);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   /**
-   * Deletes a lead record by ID from the pipeline state.
-   * Memoized using useCallback to stabilize its functional reference.
+   * Updates lead profile parameters.
    */
-  const deleteLead = useCallback((leadId) => {
-    setLeads((prev) => prev.filter((lead) => lead.id !== leadId));
-  }, [setLeads]);
+  const updateLead = useCallback(async (leadId, updatedFields) => {
+    setIsLoading(true);
+    try {
+      const res = await leadService.updateLead(leadId, updatedFields);
+      if (res && res.data) {
+        const cleaned = normalizeLead(res.data);
+        setLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? cleaned : l))
+        );
+        toast.success('Lead updated successfully');
+        return cleaned;
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Failed to update lead details';
+      toast.error(msg);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   /**
-   * Retrieves a single lead object from the state.
-   * Memoized using useCallback, dependent on the active leads state array.
+   * Deletes a lead record.
+   */
+  const deleteLead = useCallback(async (leadId) => {
+    setIsLoading(true);
+    try {
+      await leadService.deleteLead(leadId);
+      setLeads((prev) => prev.filter((l) => l.id !== leadId));
+      toast.success('Lead deleted successfully');
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Failed to delete lead from pipeline';
+      toast.error(msg);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Helper retrieve method to grab individual lead data.
    */
   const getLeadById = useCallback((leadId) => {
-    return leads.find((lead) => lead.id === leadId);
+    return leads.find((l) => l.id === leadId);
   }, [leads]);
 
-  /**
-   * Appends an activity note record to a specific lead profile.
-   * Memoized using useCallback to stabilize its functional reference.
-   */
-  const addNote = useCallback((leadId, noteText) => {
-    const newNote = {
-      id: `note-${Date.now()}`,
-      text: noteText,
-      date: new Date().toISOString()
-    };
-    setLeads((prev) =>
-      prev.map((lead) => {
-        if (lead.id === leadId) {
-          return {
-            ...lead,
-            notes: lead.notes ? [...lead.notes, newNote] : [newNote]
-          };
-        }
-        return lead;
-      })
-    );
-  }, [setLeads]);
-
-  // Memoize the value distributed to the provider to avoid triggering re-renders of all consumer nodes
+  // Memoize lead context values
   const contextValue = useMemo(() => ({
     leads,
+    isLoading,
+    pagination,
+    fetchLeads,
     addLead,
     updateLead,
     deleteLead,
-    getLeadById,
-    addNote
-  }), [leads, addLead, updateLead, deleteLead, getLeadById, addNote]);
+    getLeadById
+  }), [leads, isLoading, pagination, fetchLeads, addLead, updateLead, deleteLead, getLeadById]);
 
   return (
-    // Distribute memoized state values and CRUD functions to context consumers
     <LeadContext.Provider value={contextValue}>
       {children}
     </LeadContext.Provider>
@@ -136,10 +160,8 @@ export function LeadProvider({ children }) {
 
 /**
  * Custom hook to consume the LeadContext.
- * Asserts that the consumer resides within a LeadProvider block.
  *
  * @returns {Object} Leads context state values and CRUD actions.
- * @throws {Error} Throws descriptive error if used outside LeadProvider.
  */
 export function useLeads() {
   const context = useContext(LeadContext);
@@ -148,3 +170,4 @@ export function useLeads() {
   }
   return context;
 }
+export default LeadContext;

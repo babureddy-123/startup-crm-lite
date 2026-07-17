@@ -1,20 +1,21 @@
-// Import the React core library to enable component structures and JSX rendering.
+// Import the React core library.
 import React from 'react';
-// Import BrowserRouter from react-router-dom to manage and support HTML5 History routing context.
+// Import BrowserRouter from react-router-dom to manage page routes.
 import { BrowserRouter } from 'react-router-dom';
-// Import the main layout wrapper containing header, sidebar, footer and viewport frames.
-import Layout from './components/common/Layout';
-// Import AppRoutes which holds all our lazy loaded routes and Suspense configs.
+// Import AppRoutes which holds all our lazy loaded routes and guards.
 import AppRoutes from './routes';
-// Import the Toast notification system for temporary trigger messages.
+// Import the Toast notification system for temporary messages.
 import { Toaster } from 'react-hot-toast';
 
-// Define the root App component as the default export.
+/**
+ * Root App component rendering the routers and global toast triggers.
+ *
+ * @returns {React.JSX.Element} App viewport layout.
+ */
 export default function App() {
   return (
-    // Wrap the application within BrowserRouter to activate React Router functionality.
     <BrowserRouter>
-      {/* Configure the global notification toaster styling and behavior settings. */}
+      {/* Toast notifications styling mapping */}
       <Toaster 
         position="bottom-right"
         toastOptions={{
@@ -22,11 +23,8 @@ export default function App() {
           duration: 3000,
         }}
       />
-      {/* Wrap views in Layout to show navigation and header controls alongside the routed viewport. */}
-      <Layout>
-        {/* Render the core routing hierarchy with dynamic lazy-loading and suspense fallback. */}
-        <AppRoutes />
-      </Layout>
+      {/* AppRoutes handles Layout wrapping for protected elements dynamically */}
+      <AppRoutes />
     </BrowserRouter>
   );
 }

@@ -1,13 +1,16 @@
-// Import React, lazy loading API, and Suspense capability for deferred UI rendering.
 import React, { lazy, Suspense } from 'react';
-// Import routing components
-import { Routes, Route } from 'react-router-dom';
+// Import routing hooks
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Layout from '../components/common/Layout';
 
 // Dynamically import (Lazy Load) page components
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const Leads = lazy(() => import('../pages/Leads'));
 const Analytics = lazy(() => import('../pages/Analytics'));
 const Settings = lazy(() => import('../pages/Settings'));
+const Login = lazy(() => import('../pages/Login'));
+const Register = lazy(() => import('../pages/Register'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 /**
@@ -31,7 +34,35 @@ function LoadingSpinner() {
 }
 
 /**
+ * ProtectedRoute component acts as a route guard.
+ * Redirects visitors without token credentials to `/login`.
+ * Wraps authorized visits inside the admin Layout template.
+ *
+ * @returns {React.JSX.Element} Guard layout wrapper.
+ */
+function ProtectedRoute() {
+  const { token, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Redirect to login if user lacks JWT token credentials
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Render Layout and matched child routes
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
+}
+
+/**
  * AppRoutes orchestrates application paths, mapping components to routes.
+ * Separates public routes (Login, Register) from protected ones.
  *
  * @returns {React.JSX.Element} Configured routes switcher.
  */
@@ -39,10 +70,19 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/leads" element={<Leads />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/settings" element={<Settings />} />
+        {/* Public authentication paths */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Protected workspace paths */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/leads" element={<Leads />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+
+        {/* Fallback not found route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
