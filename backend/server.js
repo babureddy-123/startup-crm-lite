@@ -78,10 +78,15 @@ app.use((req, res, next) => {
 app.use(mongoSanitize());
 
 // 6. Dynamic CORS Origin check list mapping production endpoints
-const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-  'https://your-app.vercel.app'
-].filter(Boolean);
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.FRONTEND_URL]
+  : [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000'
+    ].filter(Boolean);
 
 app.use(
   cors({

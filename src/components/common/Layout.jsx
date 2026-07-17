@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // Import useLocation, NavLink, and Link to manage active links across top, bottom, and sidebar menus
 import { useLocation, NavLink, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 // Import layout indicators and Lucide React icons
 import { 
   Menu, 
@@ -30,9 +31,22 @@ import DarkModeToggle from './DarkModeToggle';
  * @returns {React.JSX.Element} Rendered Layout structure.
  */
 export default function Layout({ children }) {
+  const { user } = useAuth();
   // Access location routing updates to render page titles
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  /**
+   * Generates display initials from the user's name.
+   */
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  };
 
   /**
    * Helper mapping route paths to user-friendly title strings.
@@ -75,16 +89,23 @@ export default function Layout({ children }) {
         {/* User Workspace Profile bottom footer */}
         <div className="p-3 m-3 rounded-xl border border-border-subtle/60 bg-bg-base/40 flex flex-col lg:flex-row items-center gap-3 shrink-0 hover:bg-bg-base hover:scale-[1.01] transition-all duration-200">
           <div className="relative shrink-0">
-            <img 
-              className="w-9 h-9 rounded-full bg-bg-base border border-border-subtle object-cover" 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" 
-              alt="User profile avatar" 
-            />
+            {user?.profileImage ? (
+              <img 
+                className="w-9 h-9 rounded-full bg-bg-base border border-border-subtle object-cover" 
+                src={user.profileImage} 
+                alt="User profile avatar" 
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">
+                {getInitials(user?.name)}
+              </div>
+            )}
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-surface-card rounded-full"></span>
           </div>
-          <div className="hidden lg:block min-w-0">
-            <p className="text-sm font-semibold text-txt-main truncate leading-tight">Anish Reddy</p>
-            <p className="text-xs text-txt-sub truncate">Founder & CEO</p>
+          <div className="hidden lg:block min-w-0 w-full">
+            <p className="text-sm font-semibold text-txt-main truncate leading-tight" title={user?.name}>{user?.name || 'Anonymous'}</p>
+            <p className="text-[11px] text-txt-sub truncate leading-tight mt-0.5" title={user?.email}>{user?.email}</p>
+            <p className="text-[9px] font-mono text-primary uppercase tracking-wider mt-1">{user?.role || 'User'}</p>
           </div>
         </div>
       </aside>
@@ -120,14 +141,21 @@ export default function Layout({ children }) {
             </div>
 
             <div className="pt-6 border-t border-border-subtle flex items-center gap-3 shrink-0">
-              <img 
-                className="w-10 h-10 rounded-full object-cover" 
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" 
-                alt="User profile avatar" 
-              />
-              <div>
-                <p className="text-sm font-semibold text-txt-main">Anish Reddy</p>
-                <p className="text-xs text-txt-sub">Founder & CEO</p>
+              {user?.profileImage ? (
+                <img 
+                  className="w-10 h-10 rounded-full object-cover" 
+                  src={user.profileImage} 
+                  alt="User profile avatar" 
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-base font-bold shrink-0">
+                  {getInitials(user?.name)}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-txt-main truncate" title={user?.name}>{user?.name || 'Anonymous'}</p>
+                <p className="text-xs text-txt-sub truncate" title={user?.email}>{user?.email}</p>
+                <p className="text-[10px] font-mono text-primary uppercase tracking-wider mt-0.5">{user?.role || 'User'}</p>
               </div>
             </div>
           </div>

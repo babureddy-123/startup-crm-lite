@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   User, 
   Briefcase, 
@@ -24,15 +25,25 @@ import { toast } from 'react-hot-toast';
  */
 export default function Settings() {
   const { themeMode, setThemeMode } = useTheme();
+  const { user, updateProfile } = useAuth();
 
   // Tab navigation states: 'profile' | 'workspace' | 'appearance' | 'notifications' | 'security'
   const [activeSection, setActiveSection] = useState('profile');
 
   // Form State: Profile Details
-  const [profileName, setProfileName] = useState('Anish Reddy');
-  const [profileEmail, setProfileEmail] = useState('anish.reddy@crmlite.io');
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
   const [profilePhone, setProfilePhone] = useState('+91 98765 43210');
-  const [profileRole, setProfileRole] = useState('Founder & CEO');
+  const [profileRole, setProfileRole] = useState(user?.role || 'User');
+
+  // Keep state updated in case of page refresh or async user loading
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileEmail(user.email || '');
+      setProfileRole(user.role || 'User');
+    }
+  }, [user]);
 
   // Form State: Workspace
   const [workspaceName, setWorkspaceName] = useState('CRM Lite HQ');
@@ -53,14 +64,42 @@ export default function Settings() {
    * Action handler to save settings with visual Toast feedbacks.
    */
   const handleSaveSettings = (sectionName) => {
+    if (sectionName === 'profile') {
+      const toastId = toast.loading('Saving profile changes...');
+      updateProfile({ name: profileName })
+        .then(() => {
+          toast.success('Profile updated successfully!', { id: toastId });
+        })
+        .catch((err) => {
+          const msg = err.response?.data?.message || 'Failed to update profile.';
+          toast.error(msg, { id: toastId });
+        });
+      return;
+    }
+
     // Validate password changes if security section is updated
     if (sectionName === 'security') {
-      if (newPassword !== confirmPassword) {
-        toast.error("New passwords do not match!");
-        return;
-      }
-      if (newPassword && !currentPassword) {
-        toast.error("Please enter your current password.");
+      if (newPassword) {
+        if (!currentPassword) {
+          toast.error("Please enter your current password.");
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          toast.error("New passwords do not match!");
+          return;
+        }
+        const toastId = toast.loading('Updating password...');
+        updateProfile({ currentPassword, newPassword })
+          .then(() => {
+            toast.success('Password updated successfully!', { id: toastId });
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+          })
+          .catch((err) => {
+            const msg = err.response?.data?.message || 'Failed to update password.';
+            toast.error(msg, { id: toastId });
+          });
         return;
       }
     }
@@ -71,12 +110,6 @@ export default function Settings() {
         id: toastId,
         icon: '⚙️'
       });
-      // Clear passwords on save
-      if (sectionName === 'security') {
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }
     }, 800);
   };
 
