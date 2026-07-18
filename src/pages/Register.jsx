@@ -72,7 +72,7 @@ export default function Register() {
       await register(name, email, password);
       toast.success('Registration successful!');
       // Success redirection to dashboard home
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       if (!err.response) {
         toast.error('Cannot connect to the server. Please check your internet connection or try again later.');

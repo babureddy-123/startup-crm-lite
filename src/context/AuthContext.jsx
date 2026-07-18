@@ -31,34 +31,44 @@ const AuthContext = createContext(null);
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('crm-token'));
+  const [token, setToken] = useState(() => localStorage.getItem('crm-token'));
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sync profile details on mount if crm-token is found
+  // Sync profile details ONLY once on initial mount if token exists
   useEffect(() => {
+    let isMounted = true;
+
     async function restoreSession() {
-      if (token) {
-        if (!user) {
-          try {
-            const profileData = await authService.getProfile();
-            // Profile returns { success: true, message, data: user }
-            if (profileData && profileData.data) {
-              setUser(profileData.data);
-            }
-          } catch (error) {
-            console.error('Failed to restore user auth session:', error);
+      const storedToken = localStorage.getItem('crm-token');
+      if (storedToken) {
+        try {
+          const profileData = await authService.getProfile();
+          if (isMounted && profileData && profileData.data) {
+            setUser(profileData.data);
+          }
+        } catch (error) {
+          console.error('Failed to restore user auth session:', error);
+          if (isMounted) {
             authService.logout();
             setUser(null);
             setToken(null);
           }
         }
-      } else {
+      } else if (isMounted) {
         setUser(null);
       }
-      setIsLoading(false);
+
+      if (isMounted) {
+        setIsLoading(false);
+      }
     }
+
     restoreSession();
-  }, [token]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * Performs user login calls.
@@ -71,14 +81,18 @@ export function AuthProvider({ children }) {
     try {
       const res = await authService.login(email, password);
       // login response returns { success: true, data: { token, user } }
-      if (res && res.data) {
+      if (res && res.data && res.data.token) {
         const { token: userToken, user: userData } = res.data;
         localStorage.setItem('crm-token', userToken);
         setToken(userToken);
-        setUser(userData);
+        setUser(userData || null);
+        setIsLoading(false);
         return res.data;
       }
-      throw new Error('Malformed server login response');
+      throw new Error(res?.message || 'Malformed server login response');
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -96,14 +110,18 @@ export function AuthProvider({ children }) {
     try {
       const res = await authService.register(name, email, password);
       // register response returns { success: true, data: { token, user } }
-      if (res && res.data) {
+      if (res && res.data && res.data.token) {
         const { token: userToken, user: userData } = res.data;
         localStorage.setItem('crm-token', userToken);
         setToken(userToken);
-        setUser(userData);
+        setUser(userData || { name, email, role: 'User' });
+        setIsLoading(false);
         return res.data;
       }
-      throw new Error('Malformed server registration response');
+      throw new Error(res?.message || 'Malformed server registration response');
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +134,7 @@ export function AuthProvider({ children }) {
     authService.logout();
     setToken(null);
     setUser(null);
+    setIsLoading(false);
   };
 
   /**
