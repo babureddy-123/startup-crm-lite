@@ -7,30 +7,25 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import mongoose from 'mongoose';
 
-// Import database, routes, and error configurations
 import connectDB from './config/database.js';
 import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import leadRoutes from './routes/leadRoutes.js';
 
-/**
- * Validates that all required environment variables are present.
- * Prevents booting the application with missing configurations.
- */
 function checkRequiredEnvVars() {
-  const requiredVars = ['MONGODB_URI', 'JWT_SECRET', 'PORT'];
+  const requiredVars = ['MONGODB_URI', 'JWT_SECRET'];
   const missingVars = requiredVars.filter((varName) => !process.env[varName]);
 
   if (missingVars.length > 0) {
-    console.error(`Fatal Error: Missing required environment variables: ${missingVars.join(', ')}`);
+    console.error(
+      `Fatal Error: Missing required environment variables: ${missingVars.join(', ')}`
+    );
     process.exit(1);
   }
 }
 
-// Initialize Express
 const app = express();
 
-// 1. General API rate limiter (100 requests per 15 minutes per IP)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -39,7 +34,6 @@ const generalLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// 2. Strict Authentication rate limiter (10 attempts per 15 minutes per IP)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -48,22 +42,19 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Mount rate limiters on respective API sub-routes
 app.use('/api/', generalLimiter);
 app.use('/api/auth/', authLimiter);
 
-// 3. Security HTTP headers via Helmet
 app.use(helmet());
 
-// 4. Request Logging (combined details in production, concise/colorized in development)
 const NODE_ENV = process.env.NODE_ENV || 'production';
+
 if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
   app.use(morgan('combined'));
 }
 
-// 5. MongoDB query injection sanitization (Express 5 compatibility fix)
 app.use((req, res, next) => {
   if (req.query) {
     Object.defineProperty(req, 'query', {
@@ -75,9 +66,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 app.use(mongoSanitize());
 
-// 6. Dynamic CORS Origin check list mapping production endpoints
 const devOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -90,7 +81,7 @@ const devOrigins = [
 ];
 
 const parsedEnvUrls = process.env.FRONTEND_URLS
-  ? process.env.FRONTEND_URLS.split(',').map(url => url.trim())
+  ? process.env.FRONTEND_URLS.split(',').map((url) => url.trim())
   : [];
 
 const allowedOrigins = [
@@ -106,13 +97,15 @@ app.use(
       if (!origin) {
         return callback(null, true);
       }
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      // Dynamically allow any Vercel preview/branch URL for this project
+
       if (origin.endsWith('.vercel.app') && origin.includes('startup-crm-lite')) {
         return callback(null, true);
       }
+
       callback(new Error('Not allowed by CORS'));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -121,15 +114,13 @@ app.use(
   })
 );
 
-// 7. Request body parsing settings
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-/**
- * Health check status endpoint (remains open and accessible even if MongoDB is offline).
- */
 app.get('/api/health', (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED';
+  const dbStatus =
+    mongoose.connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED';
+
   res.status(200).json({
     status: 'OK',
     dbStatus,
@@ -137,10 +128,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-/**
- * Guard middleware verifying database connectivity before handling queries.
- * Returns a 503 error instead of crash outcomes.
- */
 const dbGuard = (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({
@@ -148,50 +135,43 @@ const dbGuard = (req, res, next) => {
       message: 'Database connection is currently unavailable. Please try again later.'
     });
   }
+
   next();
 };
 
-// Mount database status check guard for all database-related API requests
 app.use('/api', dbGuard);
 
-// 8. Register endpoints
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
 
-// 9. Error Handler registered last
 app.use(errorHandler);
 
-// Boot server configurations
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
-  // Validate env configurations on startup
   checkRequiredEnvVars();
 
-  // Await database connection before booting Express HTTP listener
   try {
     await connectDB();
   } catch (error) {
-    console.error(`Database connection failed: ${error.message}. Express server not started.`);
+    console.error(
+      `Database connection failed: ${error.message}. Express server not started.`
+    );
     console.log('Retrying database connection in 5 seconds...');
     setTimeout(startServer, 5000);
     return;
   }
-  
-  const server = app.listen(PORT, () => {
+
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT} in ${NODE_ENV} mode`);
   });
 
-  /**
-   * Gracefully shuts down the HTTP server and Mongoose connection when signals are received.
-   *
-   * @param {string} signal - Trigger signal (SIGINT/SIGTERM).
-   */
   const gracefulShutdown = (signal) => {
     console.log(`\nReceived ${signal}. Server shutting down gracefully...`);
-    
+
     server.close(async () => {
       console.log('HTTP Server closed.');
+
       try {
         await mongoose.connection.close();
         console.log('MongoDB connection disconnected.');
@@ -203,7 +183,6 @@ async function startServer() {
     });
   };
 
-  // Bind shutdown signals for graceful cluster scaling
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 }
