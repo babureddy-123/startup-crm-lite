@@ -93,38 +93,38 @@ export default function SalesFunnelCard({ leads = [] }) {
               className="w-full max-w-[190px] drop-shadow-sm overflow-visible"
               aria-label="SVG Sales Funnel Visualization"
             >
-              {/* New (Gray Trapezoid) */}
+              {/* New (Muted Ocean Trapezoid) */}
               <polygon 
                 points="20,10 200,10 195,45 25,45" 
-                fill="#94A3B8" 
+                fill="#6A93A1" 
                 className="opacity-90 hover:opacity-100 transition-opacity cursor-pointer" 
               />
               
-              {/* Contacted (Primary Blue) */}
+              {/* Contacted (Primary Ocean) */}
               <polygon 
                 points="25,45 195,45 155,80 65,80" 
-                fill="#2563EB" 
+                fill="#007C91" 
                 className="opacity-90 hover:opacity-100 transition-opacity cursor-pointer" 
               />
               
-              {/* Meeting Scheduled (Amber Orange) */}
+              {/* Meeting Scheduled (Accent Coral) */}
               <polygon 
                 points="65,80 155,80 155,115 65,115" 
-                fill="#F59E0B" 
+                fill="#FF8C61" 
                 className="opacity-90 hover:opacity-100 transition-opacity cursor-pointer" 
               />
               
-              {/* Proposal Sent (Purple) */}
+              {/* Proposal Sent (Secondary Aqua) */}
               <polygon 
                 points="65,115 155,115 155,150 65,150" 
-                fill="#7C3AED" 
+                fill="#3AA5B8" 
                 className="opacity-90 hover:opacity-100 transition-opacity cursor-pointer" 
               />
               
-              {/* Won (Success Green Triangle pointing down) */}
+              {/* Won (Success Emerald Triangle) */}
               <polygon 
                 points="65,150 155,150 110,185" 
-                fill="#22C55E" 
+                fill="#00A884" 
                 className="opacity-90 hover:opacity-100 transition-opacity cursor-pointer" 
               />
             </svg>
@@ -138,10 +138,10 @@ export default function SalesFunnelCard({ leads = [] }) {
               {funnelData.map((step) => (
                 <div key={step.id} className="flex items-start gap-2">
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-0.5 ${
-                    step.id === 'new' ? 'bg-[#94A3B8]' :
-                    step.id === 'contacted' ? 'bg-[#2563EB]' :
-                    step.id === 'meeting' ? 'bg-[#F59E0B]' :
-                    step.id === 'proposal' ? 'bg-[#7C3AED]' : 'bg-[#22C55E]'
+                    step.id === 'new' ? 'bg-[#6A93A1]' :
+                    step.id === 'contacted' ? 'bg-[#007C91]' :
+                    step.id === 'meeting' ? 'bg-[#FF8C61]' :
+                    step.id === 'proposal' ? 'bg-[#3AA5B8]' : 'bg-[#00A884]'
                   }`} />
                   <div>
                     <p className="font-bold text-txt-main leading-tight">{step.name}</p>

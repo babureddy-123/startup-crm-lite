@@ -44,12 +44,12 @@ export default function PieChartCard({ leads = [] }) {
 
   // Specific status colors requested by design
   const COLORS = {
-    'New': '#94A3B8',
-    'Contacted': '#2563EB',
-    'Meeting Scheduled': '#F59E0B',
-    'Proposal Sent': '#7C3AED',
-    'Won': '#22C55E',
-    'Lost': '#EF4444'
+    'New': '#6A93A1',
+    'Contacted': '#007C91',
+    'Meeting Scheduled': '#FF8C61',
+    'Proposal Sent': '#3AA5B8',
+    'Won': '#00A884',
+    'Lost': '#E63946'
   };
 
   const sliceColors = data.map(item => COLORS[item.name] || '#94A3B8');
