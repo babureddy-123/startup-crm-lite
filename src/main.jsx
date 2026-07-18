@@ -9,7 +9,7 @@ import './style.css';
 // Initialize and mount the React application on the DOM element with the ID 'app'.
 const root = ReactDOM.createRoot(document.getElementById('app'));
 
-const isProdMissingApi = import.meta.env.PROD && !import.meta.env.VITE_API_URL;
+const isProdMissingApi = false;
 
 if (isProdMissingApi) {
   root.render(

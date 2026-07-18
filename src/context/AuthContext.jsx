@@ -77,7 +77,6 @@ export function AuthProvider({ children }) {
    * @param {string} password - Credentials password.
    */
   const login = async (email, password) => {
-    setIsLoading(true);
     try {
       const res = await authService.login(email, password);
       // login response returns { success: true, data: { token, user } }
@@ -93,8 +92,6 @@ export function AuthProvider({ children }) {
     } catch (error) {
       setIsLoading(false);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -106,7 +103,6 @@ export function AuthProvider({ children }) {
    * @param {string} password - Security password.
    */
   const register = async (name, email, password) => {
-    setIsLoading(true);
     try {
       const res = await authService.register(name, email, password);
       // register response returns { success: true, data: { token, user } }
@@ -122,8 +118,6 @@ export function AuthProvider({ children }) {
     } catch (error) {
       setIsLoading(false);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
