@@ -64,8 +64,8 @@ export default function Login() {
         // Show express-validator field error messages from backend
         setError(validationErrors[0].message);
       } else {
-        const msg = err.response?.data?.message || 'Invalid email or password credentials.';
-        setError(msg);
+        const msg = err.response?.data?.message;
+        setError(msg || `Server error (${err.response?.status || 'unknown'}). Please try again later.`);
       }
     } finally {
       setIsSubmitting(false);

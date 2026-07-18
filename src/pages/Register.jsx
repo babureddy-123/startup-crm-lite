@@ -88,12 +88,12 @@ export default function Register() {
         // Show validation messages from express-validator backend
         setError(validationErrors[0].message);
       } else {
-        const msg = err.response?.data?.message || '';
+        const msg = err.response?.data?.message;
         // Capture duplicate-email errors (such as 409 conflicts)
-        if (msg.includes('exists') || msg.toLowerCase().includes('duplicate') || err.response?.status === 409) {
+        if ((msg && (msg.includes('exists') || msg.toLowerCase().includes('duplicate'))) || err.response?.status === 409) {
           setError('An account with this email already exists. Please sign in instead.');
         } else {
-          setError(msg || 'Registration failed. Email may already be in use.');
+          setError(msg || `Server error (${err.response?.status || 'unknown'}). Please try again later.`);
         }
       }
     } finally {
