@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 // Import context leads hook to perform CRUD functions
 import { useLeads } from '../context/LeadContext';
 // Import common subcomponents: search, filter, empty states
@@ -21,7 +21,12 @@ import { toast } from 'react-hot-toast';
  * @returns {React.JSX.Element} Rendered leads page.
  */
 export default function Leads() {
-  const { leads, addLead, updateLead, deleteLead } = useLeads();
+  const { leads, fetchLeads, addLead, updateLead, deleteLead } = useLeads();
+
+  // Automatically fetch fresh leads list on component mount
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
 
   // Page layout and interactive modal states
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'

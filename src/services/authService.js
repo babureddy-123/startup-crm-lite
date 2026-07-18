@@ -30,10 +30,12 @@ const authService = {
   },
 
   /**
-   * Clears active authentication tokens from localStorage.
+   * Clears active authentication tokens and session data.
    */
   logout: () => {
     localStorage.removeItem('crm-token');
+    localStorage.clear();
+    sessionStorage.clear();
   },
 
   /**

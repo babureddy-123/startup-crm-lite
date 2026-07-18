@@ -79,6 +79,7 @@ export function LeadProvider({ children }) {
         const cleaned = normalizeLead(res.data);
         setLeads((prev) => [cleaned, ...prev]);
         toast.success('Lead created successfully');
+        fetchLeads();
         return cleaned;
       }
     } catch (error) {
@@ -88,7 +89,7 @@ export function LeadProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchLeads]);
 
   /**
    * Updates lead profile parameters.
@@ -103,6 +104,7 @@ export function LeadProvider({ children }) {
           prev.map((l) => (l.id === leadId ? cleaned : l))
         );
         toast.success('Lead updated successfully');
+        fetchLeads();
         return cleaned;
       }
     } catch (error) {
@@ -112,7 +114,7 @@ export function LeadProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchLeads]);
 
   /**
    * Deletes a lead record.
@@ -123,6 +125,7 @@ export function LeadProvider({ children }) {
       await leadService.deleteLead(leadId);
       setLeads((prev) => prev.filter((l) => l.id !== leadId));
       toast.success('Lead deleted successfully');
+      fetchLeads();
     } catch (error) {
       const msg = error.response?.data?.message || 'Failed to delete lead from pipeline';
       toast.error(msg);
@@ -130,7 +133,7 @@ export function LeadProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchLeads]);
 
   /**
    * Helper retrieve method to grab individual lead data.

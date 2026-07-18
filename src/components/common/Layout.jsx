@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-// Import useLocation, NavLink, and Link to manage active links across top, bottom, and sidebar menus
-import { useLocation, NavLink, Link } from 'react-router-dom';
+// Import useLocation, useNavigate, NavLink, and Link to manage active links across top, bottom, and sidebar menus
+import { useLocation, useNavigate, NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 // Import layout indicators and Lucide React icons
 import { 
@@ -12,7 +12,8 @@ import {
   LayoutDashboard,
   Users,
   BarChart3,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 // Import the Sidebar component to render sidebar items
 import Sidebar from './Sidebar';
@@ -31,10 +32,19 @@ import DarkModeToggle from './DarkModeToggle';
  * @returns {React.JSX.Element} Rendered Layout structure.
  */
 export default function Layout({ children }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   // Access location routing updates to render page titles
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  /**
+   * Handles user logout and redirects to login view.
+   */
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   /**
    * Generates display initials from the user's name.
@@ -89,26 +99,37 @@ export default function Layout({ children }) {
         </div>
 
         {/* User Workspace Profile bottom footer */}
-        <div className="p-3 m-3 rounded-xl border border-border-subtle/60 bg-bg-base/40 flex flex-col lg:flex-row items-center gap-3 shrink-0 hover:bg-bg-base hover:scale-[1.01] transition-all duration-200">
-          <div className="relative shrink-0">
-            {user?.profileImage ? (
-              <img 
-                className="w-9 h-9 rounded-full bg-bg-base border border-border-subtle object-cover" 
-                src={user.profileImage} 
-                alt="User profile avatar" 
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">
-                {getInitials(user?.name)}
-              </div>
-            )}
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-surface-card rounded-full"></span>
+        <div className="p-3 m-3 rounded-xl border border-border-subtle/60 bg-bg-base/40 flex flex-col gap-2.5 shrink-0 hover:bg-bg-base transition-all duration-200">
+          <div className="flex items-center gap-3 w-full">
+            <div className="relative shrink-0">
+              {user?.profileImage ? (
+                <img 
+                  className="w-9 h-9 rounded-full bg-bg-base border border-border-subtle object-cover" 
+                  src={user.profileImage} 
+                  alt="User profile avatar" 
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">
+                  {getInitials(user?.name)}
+                </div>
+              )}
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-surface-card rounded-full"></span>
+            </div>
+            <div className="hidden lg:block min-w-0 w-full">
+              <p className="text-sm font-semibold text-txt-main truncate leading-tight" title={user?.name}>{user?.name || 'Anonymous'}</p>
+              <p className="text-[11px] text-txt-sub truncate leading-tight mt-0.5" title={user?.email}>{user?.email}</p>
+              <p className="text-[9px] font-mono text-primary uppercase tracking-wider mt-1">{user?.role || 'User'}</p>
+            </div>
           </div>
-          <div className="hidden lg:block min-w-0 w-full">
-            <p className="text-sm font-semibold text-txt-main truncate leading-tight" title={user?.name}>{user?.name || 'Anonymous'}</p>
-            <p className="text-[11px] text-txt-sub truncate leading-tight mt-0.5" title={user?.email}>{user?.email}</p>
-            <p className="text-[9px] font-mono text-primary uppercase tracking-wider mt-1">{user?.role || 'User'}</p>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center lg:justify-start gap-2 px-2.5 py-1.5 text-xs font-semibold rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 border border-rose-500/20 transition-all duration-150 cursor-pointer focus:outline-none"
+            title="Sign out of account"
+            aria-label="Logout"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span className="hidden lg:inline">Logout</span>
+          </button>
         </div>
       </aside>
 
@@ -142,23 +163,34 @@ export default function Layout({ children }) {
               <Sidebar onItemClick={() => setIsMobileMenuOpen(false)} forceFull />
             </div>
 
-            <div className="pt-6 border-t border-border-subtle flex items-center gap-3 shrink-0">
-              {user?.profileImage ? (
-                <img 
-                  className="w-10 h-10 rounded-full object-cover" 
-                  src={user.profileImage} 
-                  alt="User profile avatar" 
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-base font-bold shrink-0">
-                  {getInitials(user?.name)}
+            <div className="pt-6 border-t border-border-subtle flex flex-col gap-3 shrink-0">
+              <div className="flex items-center gap-3">
+                {user?.profileImage ? (
+                  <img 
+                    className="w-10 h-10 rounded-full object-cover" 
+                    src={user.profileImage} 
+                    alt="User profile avatar" 
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-base font-bold shrink-0">
+                    {getInitials(user?.name)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-txt-main truncate" title={user?.name}>{user?.name || 'Anonymous'}</p>
+                  <p className="text-xs text-txt-sub truncate" title={user?.email}>{user?.email}</p>
+                  <p className="text-[10px] font-mono text-primary uppercase tracking-wider mt-0.5">{user?.role || 'User'}</p>
                 </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-txt-main truncate" title={user?.name}>{user?.name || 'Anonymous'}</p>
-                <p className="text-xs text-txt-sub truncate" title={user?.email}>{user?.email}</p>
-                <p className="text-[10px] font-mono text-primary uppercase tracking-wider mt-0.5">{user?.role || 'User'}</p>
               </div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 border border-rose-500/20 transition-all duration-150 cursor-pointer focus:outline-none"
+                title="Sign out of account"
+                aria-label="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </div>
