@@ -1,18 +1,20 @@
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
 
-// Setup api url connection fallback
-const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:5000');
+// Resolve API base URL from VITE_API_BASE_URL or VITE_API_URL, fallback to deployed Render URL in production
+const rawUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://startup-crm-lite-1eb3.onrender.com' : 'http://localhost:5000');
 
-if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
-  console.error("Configuration Error: VITE_API_URL is missing in the production environment.");
+// Format baseURL: remove trailing slashes and ensure /api suffix is stripped so /api routes do not duplicate
+let baseURL = (rawUrl || '').trim().replace(/\/+$/, '');
+if (baseURL.endsWith('/api')) {
+  baseURL = baseURL.slice(0, -4);
 }
+
 /**
  * Global Axios Instance preconfigured with base url.
  */
 const api = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   }
