@@ -74,6 +74,14 @@ const LeadSchema = new mongoose.Schema(
       maxlength: [1000, 'Notes cannot exceed 1000 characters']
     },
     /**
+     * Estimated financial value of the lead opportunity.
+     */
+    value: {
+      type: Number,
+      default: 0,
+      min: [0, 'Lead value cannot be negative']
+    },
+    /**
      * Reference to the User owner who created and manages the lead profile.
      */
     owner: {
