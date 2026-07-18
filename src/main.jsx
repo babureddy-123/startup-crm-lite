@@ -49,7 +49,7 @@ if (isProdMissingApi) {
             overflowX: 'auto',
             border: '1px solid #1e293b'
           }}>
-            VITE_API_URL is undefined
+            VITE_API_BASE_URL is undefined
           </code>
         </div>
       </div>

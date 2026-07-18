@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, User, Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { handleApiError } from '../utils/apiErrorHandler';
 
 /**
  * Register page component.
@@ -74,31 +75,18 @@ export default function Register() {
       // Success redirection to dashboard home
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      if (!err.response) {
-        toast.error('Cannot connect to the server. Please check your internet connection or try again later.');
-        return;
-      }
-      if (err.response.status === 503) {
-        const msg = err.response.data?.message || 'Database connection is currently unavailable. Please try again later.';
-        toast.error(msg);
-        return;
-      }
-      const validationErrors = err.response?.data?.errors;
-      if (Array.isArray(validationErrors) && validationErrors.length > 0) {
-        // Show validation messages from express-validator backend
-        setError(validationErrors[0].message);
+      const { type, message } = handleApiError(err, 'register');
+      if (type === '409' || message.includes('already exists')) {
+        setError('Account already exists. Please Sign In.');
+        toast.error('Account already exists. Please Sign In.');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } else {
-        const msg = err.response?.data?.message;
-        // Capture duplicate-email errors (such as 409 conflicts)
-        if ((msg && (msg.includes('exists') || msg.toLowerCase().includes('duplicate'))) || err.response?.status === 409) {
-          setError('Account already exists. Please Sign In.');
-          toast.error('Account already exists. Please Sign In.');
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
-        } else {
-          setError(msg || `Server error (${err.response?.status || 'unknown'}). Please try again later.`);
+        if (type === 'network' || type === 'cors' || type === '503' || type === 'server_error') {
+          toast.error(message);
         }
+        setError(message);
       }
     } finally {
       setIsSubmitting(false);

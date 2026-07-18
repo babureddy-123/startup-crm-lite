@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Resolve API base URL from VITE_API_BASE_URL or VITE_API_URL, fallback to deployed Render URL in production
-const rawUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://startup-crm-lite-1eb3.onrender.com' : 'http://localhost:5000');
+// Resolve API base URL strictly from VITE_API_BASE_URL environment variable
+const rawUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 // Format baseURL: remove trailing slashes and ensure /api suffix is stripped so /api routes do not duplicate
 let baseURL = (rawUrl || '').trim().replace(/\/+$/, '');

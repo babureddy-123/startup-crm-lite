@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { handleApiError } from '../utils/apiErrorHandler';
 
 /**
  * Login page component.
@@ -50,23 +51,11 @@ export default function Login() {
       // Success redirection to dashboard home
       navigate('/dashboard');
     } catch (err) {
-      if (!err.response) {
-        toast.error('Cannot connect to the server. Please check your internet connection or try again later.');
-        return;
+      const { type, message } = handleApiError(err, 'login');
+      if (type === 'network' || type === 'cors' || type === '503' || type === 'server_error') {
+        toast.error(message);
       }
-      if (err.response.status === 503) {
-        const msg = err.response.data?.message || 'Database connection is currently unavailable. Please try again later.';
-        toast.error(msg);
-        return;
-      }
-      const validationErrors = err.response?.data?.errors;
-      if (Array.isArray(validationErrors) && validationErrors.length > 0) {
-        // Show express-validator field error messages from backend
-        setError(validationErrors[0].message);
-      } else {
-        const msg = err.response?.data?.message;
-        setError(msg || `Server error (${err.response?.status || 'unknown'}). Please try again later.`);
-      }
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
