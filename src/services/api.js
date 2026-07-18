@@ -2,8 +2,11 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 // Setup api url connection fallback
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:5000');
 
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.error("Configuration Error: VITE_API_URL is missing in the production environment.");
+}
 /**
  * Global Axios Instance preconfigured with base url.
  */

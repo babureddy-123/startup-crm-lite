@@ -96,6 +96,7 @@ const parsedEnvUrls = process.env.FRONTEND_URLS
 const allowedOrigins = [
   ...parsedEnvUrls,
   process.env.FRONTEND_URL,
+  'https://startup-crm-lite-gray.vercel.app',
   ...(process.env.NODE_ENV === 'production' ? [] : devOrigins)
 ].filter(Boolean);
 
