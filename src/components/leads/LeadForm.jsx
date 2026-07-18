@@ -38,6 +38,7 @@ export default function LeadForm({ initialData, onSubmit, onCancel }) {
   const [status, setStatus] = useState('New');
   const [source, setSource] = useState('Website');
   const [value, setValue] = useState('');
+  const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -49,6 +50,14 @@ export default function LeadForm({ initialData, onSubmit, onCancel }) {
       setStatus(initialData.status || 'New');
       setSource(initialData.source || 'Website');
       setValue(initialData.value !== undefined ? String(initialData.value) : '');
+      const rawNotes = initialData.notes;
+      if (typeof rawNotes === 'string') {
+        setNotes(rawNotes);
+      } else if (Array.isArray(rawNotes) && rawNotes.length > 0) {
+        setNotes(rawNotes[0].text || rawNotes[0] || '');
+      } else {
+        setNotes('');
+      }
     } else {
       setName('');
       setCompany('');
@@ -57,6 +66,7 @@ export default function LeadForm({ initialData, onSubmit, onCancel }) {
       setStatus('New');
       setSource('Website');
       setValue('');
+      setNotes('');
     }
     setErrors({});
   }, [initialData]);
@@ -103,6 +113,7 @@ export default function LeadForm({ initialData, onSubmit, onCancel }) {
         status,
         source,
         value: value ? Number(value) : 0,
+        notes: notes.trim()
       };
       onSubmit(formData);
     }
@@ -257,6 +268,21 @@ export default function LeadForm({ initialData, onSubmit, onCancel }) {
             }`}
           />
           {errors.value && <span className="text-[10px] font-medium text-danger mt-1">{errors.value}</span>}
+        </div>
+
+        {/* Input 8: Notes */}
+        <div className="flex flex-col md:col-span-2">
+          <label htmlFor="lead-notes" className="text-xs font-semibold text-txt-main mb-1.5">
+            Notes & Comments
+          </label>
+          <textarea
+            id="lead-notes"
+            rows="3"
+            placeholder="Add background notes or interaction logs..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-lg border border-border-subtle text-sm bg-bg-base text-txt-main placeholder-txt-sub focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200"
+          />
         </div>
       </div>
 
