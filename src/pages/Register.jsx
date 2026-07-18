@@ -72,7 +72,7 @@ export default function Register() {
       await register(name, email, password);
       toast.success('Registration successful!');
       // Success redirection to dashboard home
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       if (!err.response) {
         toast.error('Cannot connect to the server. Please check your internet connection or try again later.');
@@ -91,7 +91,11 @@ export default function Register() {
         const msg = err.response?.data?.message;
         // Capture duplicate-email errors (such as 409 conflicts)
         if ((msg && (msg.includes('exists') || msg.toLowerCase().includes('duplicate'))) || err.response?.status === 409) {
-          setError('An account with this email already exists. Please sign in instead.');
+          setError('Account already exists. Please Sign In.');
+          toast.error('Account already exists. Please Sign In.');
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
         } else {
           setError(msg || `Server error (${err.response?.status || 'unknown'}). Please try again later.`);
         }

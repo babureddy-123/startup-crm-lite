@@ -48,7 +48,7 @@ export default function Login() {
       await login(email, password);
       toast.success('Successfully logged in!');
       // Success redirection to dashboard home
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       if (!err.response) {
         toast.error('Cannot connect to the server. Please check your internet connection or try again later.');

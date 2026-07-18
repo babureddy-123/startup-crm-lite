@@ -61,6 +61,27 @@ function ProtectedRoute() {
 }
 
 /**
+ * UnprotectedRoute component acts as an inverse route guard.
+ * Redirects visitors with active JWT token credentials to `/dashboard`.
+ *
+ * @returns {React.JSX.Element} Guard layout wrapper.
+ */
+function UnprotectedRoute() {
+  const { token, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Redirect to dashboard if user has token credentials
+  if (token) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
+}
+
+/**
  * AppRoutes orchestrates application paths, mapping components to routes.
  * Separates public routes (Login, Register) from protected ones.
  *
@@ -71,12 +92,15 @@ export default function AppRoutes() {
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
         {/* Public authentication paths */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route element={<UnprotectedRoute />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Route>
 
         {/* Protected workspace paths */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings" element={<Settings />} />

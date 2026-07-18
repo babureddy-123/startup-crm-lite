@@ -38,18 +38,22 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function restoreSession() {
       if (token) {
-        try {
-          const profileData = await authService.getProfile();
-          // Profile returns { success: true, message, data: user }
-          if (profileData && profileData.data) {
-            setUser(profileData.data);
+        if (!user) {
+          try {
+            const profileData = await authService.getProfile();
+            // Profile returns { success: true, message, data: user }
+            if (profileData && profileData.data) {
+              setUser(profileData.data);
+            }
+          } catch (error) {
+            console.error('Failed to restore user auth session:', error);
+            authService.logout();
+            setUser(null);
+            setToken(null);
           }
-        } catch (error) {
-          console.error('Failed to restore user auth session:', error);
-          authService.logout();
-          setUser(null);
-          setToken(null);
         }
+      } else {
+        setUser(null);
       }
       setIsLoading(false);
     }

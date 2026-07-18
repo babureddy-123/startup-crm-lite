@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, BarChart3 } from 'lucide-react';
 
 const menuItems = [
-  { name: 'Dashboard', path: '/', icon: LayoutDashboard, shortcut: 'G+D' },
+  { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, shortcut: 'G+D' },
   { name: 'Leads', path: '/leads', icon: Users, shortcut: 'G+L' },
   { name: 'Analytics', path: '/analytics', icon: BarChart3, shortcut: 'G+A' }
 ];
@@ -31,7 +31,7 @@ export default function Sidebar({ onItemClick, forceFull = false }) {
           <NavLink
             key={item.path}
             to={item.path}
-            end={item.path === '/'}
+            end={item.path === '/dashboard'}
             onClick={onItemClick}
             className={({ isActive }) => {
               // Replaced hardcoded slate/blue backgrounds with theme tokens: bg-active-sidebar and text-primary

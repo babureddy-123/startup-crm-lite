@@ -54,7 +54,9 @@ export default function Layout({ children }) {
    */
   const getPageTitle = () => {
     switch (location.pathname) {
-      case '/': return 'Workspace Overview';
+      case '/':
+      case '/dashboard':
+        return 'Workspace Overview';
       case '/leads': return 'Leads Pipeline';
       case '/analytics': return 'CRM Intelligence';
       case '/settings': return 'Workspace Settings';
