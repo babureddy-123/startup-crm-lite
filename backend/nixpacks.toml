@@ -1,0 +1,9 @@
+# Nixpacks configuration when Railway Root Directory is set to backend
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = "npm start"
