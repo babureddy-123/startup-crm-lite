@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 // Import subcomponents from components/dashboard/ directory
 import StatsCard from '../components/dashboard/StatsCard';
 import PipelineOverview from '../components/dashboard/PipelineOverview';
@@ -25,7 +25,11 @@ import { Users, TrendingUp, FileText, Percent } from 'lucide-react';
  * @returns {React.JSX.Element} Rendered Dashboard view component.
  */
 export default function Dashboard() {
-  const { leads } = useLeads();
+  const { leads, fetchLeads } = useLeads();
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
 
   const [tasks, setTasks] = useState([
     { id: 1, text: 'Follow up with Stripe Jenkins regarding pricing proposal', completed: false, priority: 'high' },

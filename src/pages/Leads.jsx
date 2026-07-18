@@ -43,15 +43,17 @@ export default function Leads() {
     setSelectedLead(null);
   }, []);
 
-  const handleFormSubmit = useCallback((formData) => {
-    if (selectedLead) {
-      updateLead(selectedLead.id, formData);
-      toast.success(`Updated lead: ${formData.name}`);
-    } else {
-      const newLead = addLead(formData);
-      toast.success(`Created lead: ${newLead.name}`);
+  const handleFormSubmit = useCallback(async (formData) => {
+    try {
+      if (selectedLead) {
+        await updateLead(selectedLead.id, formData);
+      } else {
+        await addLead(formData);
+      }
+      handleCloseModal();
+    } catch (err) {
+      console.error('Failed to submit lead details:', err);
     }
-    handleCloseModal();
   }, [selectedLead, addLead, updateLead, handleCloseModal]);
 
   const handleEditClick = useCallback((lead) => {

@@ -42,7 +42,7 @@ const authService = {
    * @returns {Promise<Object>} Axios unwrapped response data payload.
    */
   getProfile: async () => {
-    const response = await api.get('/api/auth/profile');
+    const response = await api.get('/api/auth/me');
     return response.data;
   },
 

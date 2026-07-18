@@ -13,7 +13,7 @@ import { successResponse, errorResponse } from '../utils/apiResponse.js';
 export async function getLeads(req, res, next) {
   const {
     page = 1,
-    limit = 10,
+    limit = 1000,
     sortBy = 'createdAt',
     sortOrder = 'desc',
     status,
@@ -24,7 +24,7 @@ export async function getLeads(req, res, next) {
   } = req.query;
 
   const pageNum = parseInt(page, 10) || 1;
-  const limitNum = parseInt(limit, 10) || 10;
+  const limitNum = parseInt(limit, 10) || 1000;
   const skip = (pageNum - 1) * limitNum;
 
   // Build dynamic search filter criteria

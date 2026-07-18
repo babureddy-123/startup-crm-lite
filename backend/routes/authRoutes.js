@@ -72,6 +72,7 @@ router.post('/login', validate(loginValidation), login);
 
 // Secured profile retrieval endpoint
 router.get('/profile', protect, getProfile);
+router.get('/me', protect, getProfile);
 
 // Secured profile edits endpoint
 router.put('/profile', protect, validate(updateValidation), updateProfile);
