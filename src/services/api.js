@@ -1,10 +1,12 @@
 import axios from 'axios';
 
-// Resolve API base URL strictly from VITE_API_BASE_URL environment variable
-const rawUrl = import.meta.env.VITE_API_BASE_URL || '';
+// Resolve API base URL: prioritize VITE_API_BASE_URL, fallback to live Render URL in production
+const defaultProdUrl = 'https://startup-crm-lite-1eb3.onrender.com';
+const envUrl = import.meta.env.VITE_API_BASE_URL;
+const rawUrl = envUrl || (import.meta.env.PROD ? defaultProdUrl : 'http://localhost:5000');
 
 // Format baseURL: remove trailing slashes and ensure /api suffix is stripped so /api routes do not duplicate
-let baseURL = (rawUrl || '').trim().replace(/\/+$/, '');
+let baseURL = (rawUrl || defaultProdUrl).trim().replace(/\/+$/, '');
 if (baseURL.endsWith('/api')) {
   baseURL = baseURL.slice(0, -4);
 }
