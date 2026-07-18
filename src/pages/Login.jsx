@@ -51,7 +51,7 @@ export default function Login() {
       navigate('/');
     } catch (err) {
       if (!err.response) {
-        toast.error('Cannot connect to the server. Please ensure the backend is running on port 5000.');
+        toast.error('Cannot connect to the server. Please check your internet connection or try again later.');
         return;
       }
       if (err.response.status === 503) {
