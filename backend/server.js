@@ -88,6 +88,8 @@ const allowedOrigins = [
   ...parsedEnvUrls,
   process.env.FRONTEND_URL,
   'https://startup-crm-lite-gray.vercel.app',
+  'https://startup-crm-lite-op22.vercel.app',
+  'https://startup-crm-lite-teal.vercel.app',
   ...(process.env.NODE_ENV === 'production' ? [] : devOrigins)
 ].filter(Boolean);
 
@@ -98,11 +100,11 @@ app.use(
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      if (origin.endsWith('.vercel.app') && origin.includes('startup-crm-lite')) {
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('vercel.app')
+      ) {
         return callback(null, true);
       }
 
